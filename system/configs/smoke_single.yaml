@@ -1,0 +1,23 @@
+# Smoke test of the single-round (closed-form) path on the synthetic dataset.
+# Make the data once:  cd dataset && python make_synthetic.py
+# Run:                 cd system && python main.py -cfg configs/smoke_single.yaml
+scenario:
+  dataset: Synthetic
+  partition: dir
+  num_clients: 5
+  alpha: 0.5
+  class_per_task: 2          # the class increment: 8 classes -> 4 tasks
+features:
+  backbone: synthetic
+  group: pre
+  blocks: [3]                # the last stored block
+  tokens: [cls]
+schedule:
+  regime: single_round       # one upload per client per task; there are no rounds to set
+algorithm:
+  name: SmokeClassMean
+run:
+  seed: 0
+  times: 3                   # scenario seeds 0, 1, 2
+  goal: smoke
+  device: cpu

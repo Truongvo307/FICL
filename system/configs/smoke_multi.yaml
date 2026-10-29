@@ -1,0 +1,31 @@
+# Smoke test of the multi-round path on the synthetic dataset.
+# Make the data once:  cd dataset && python make_synthetic.py
+# Run:                 cd system && python main.py -cfg configs/smoke_multi.yaml
+scenario:
+  dataset: Synthetic
+  partition: dir
+  num_clients: 5
+  alpha: 0.5
+  class_per_task: 2          # 8 classes -> 4 tasks
+features:
+  backbone: synthetic
+  group: pre
+  blocks: [3]
+  tokens: [cls]
+schedule:
+  regime: multi_round
+  rounds_per_task: 20        # a new task arrives every 20 rounds -> 80 rounds in total
+  local_epochs: 1
+  batch_size: 16
+  learning_rate: 0.01
+  join_ratio: 1.0            # every client in every round
+  eval_gap: 5                # global test accuracy every 5 rounds (curves only, never used to choose)
+algorithm:
+  name: SmokeFedAvgLinear
+  hparams:
+    weight_decay: 0.0
+run:
+  seed: 0
+  times: 3
+  goal: smoke
+  device: cpu

@@ -1,0 +1,31 @@
+# Template for a real closed-form run. Copy it, change the values, keep the structure.
+# Needs:  cd dataset
+#         python prepare_data.py TissueMNIST --download
+#         python extract_features.py TissueMNIST --backbone dinov2_vitb14
+#         python generate_scenario.py TissueMNIST dir --num_clients 10 --alpha 0.1 --class_per_task 2 --seed 0 --num_seeds 3
+# Check:  cd system && python main.py -cfg configs/template_single.yaml --dry_run
+# Run:    cd system && python main.py -cfg configs/template_single.yaml
+#
+# SmokeClassMean is only a placeholder that checks the real-data pipeline end to end. Its numbers
+# carry the SMOKE_TEST flag and are not results. Arms A1-A3c replace it in the next section.
+scenario:
+  dataset: TissueMNIST
+  partition: dir             # dir | iid | natural (natural: no num_clients, no alpha)
+  num_clients: 10
+  alpha: 0.1                 # Dirichlet alpha, dir only
+  class_per_task: 2          # the class increment; 8 classes -> 4 tasks
+  use_val: ignore            # the official validation split is not used
+features:
+  backbone: dinov2_vitb14
+  group: pre                 # pre = every block before the final norm; last_ln = last block after it
+  blocks: [11]               # final block
+  tokens: [cls]
+schedule:
+  regime: single_round       # closed-form: one upload per client per task, no rounds
+algorithm:
+  name: SmokeClassMean
+run:
+  seed: 0                    # run i reads the scenario with seed 0 + i
+  times: 3
+  goal: pipeline_check
+  device: cuda

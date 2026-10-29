@@ -1,0 +1,43 @@
+# Template: a network trained FROM SCRATCH on raw images (family 3). Copy it and set every value from
+# your protocol; the numbers below are placeholders that make the file run, not recommendations.
+# Needs:  cd dataset
+#         python prepare_data.py CIFAR100 --download
+#         python generate_scenario.py CIFAR100 dir --num_clients 10 --alpha 1.0 --class_per_task 10 --seed 0 --num_seeds 3
+# Check:  cd system && python main.py -cfg configs/template_multi_scratch.yaml --dry_run
+# Run:    cd system && python main.py -cfg configs/template_multi_scratch.yaml
+# No feature extraction is needed: the clients read the images.
+scenario:
+  dataset: CIFAR100
+  partition: dir
+  num_clients: 10
+  alpha: 1.0
+  class_per_task: 10         # 100 classes -> 10 tasks
+model:
+  backbone: resnet18_cifar   # or resnet32 (or tiny_cnn for pipeline checks)
+  pretrained: false          # the CNNs have no pretrained weights here
+  trainable: full            # the only mode for a network trained from scratch
+  image_size: 32             # CIFAR-100 images are 32 x 32
+  augment: crop_flip         # none | flip | crop_flip | rrc_flip
+schedule:
+  regime: multi_round
+  rounds_per_task: 50        # placeholder: task t covers global rounds 50t .. 50t+49
+  local_epochs: 2            # placeholder
+  batch_size: 64             # placeholder
+  learning_rate: 0.05        # placeholder
+  join_ratio: 1.0
+  eval_gap: 10               # curve point every 10 rounds (curves never choose anything)
+algorithm:
+  name: FedAvg               # FedAvgJoint: the same with every task's data (an upper bound)
+  hparams:
+    optimizer: sgd           # sgd | adam | adamw
+    momentum: 0.9            # placeholder (sgd only)
+    weight_decay: 0.0005     # placeholder
+    lr_schedule: constant    # constant | cosine (over the rounds of each task)
+    loss_classes: seen       # seen | task
+run:
+  seed: 0
+  times: 3
+  goal: scratch
+  device: cuda
+  num_workers: 4             # processes that decode images; results do not depend on it
+  eval_batch_size: 256

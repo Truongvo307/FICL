@@ -1,0 +1,23 @@
+# PROPOSED extraction config for the FCL track. Needs your approval before any full run.
+#
+# blocks:   0-based (0..11 for ViT-B), or "all", "last", "lastK", or a list such as [0, 5, 11]
+# tokens:   cls  = the class token
+#           mean = mean over patch tokens only (class and register tokens excluded)
+# final_ln: false = the raw block output (residual stream)
+#           true  = the backbone's own final norm applied to every token, then pooled
+#                   (the last block with final_ln=true is what the model itself outputs)
+#
+# Storage per image: pre 12 x 2 x 768 x 2 bytes = 36,864 B; last_ln 3,072 B.
+#
+# Open question: if the LayUP recipe applies the final norm to intermediate blocks, add
+#   all_ln: {blocks: all, tokens: [cls, mean], final_ln: true}
+# (another 36,864 B per image). Decide before the full run; the files cannot be derived later.
+groups:
+  pre:
+    blocks: all
+    tokens: [cls, mean]
+    final_ln: false
+  last_ln:
+    blocks: last
+    tokens: [cls, mean]
+    final_ln: true

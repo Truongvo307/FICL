@@ -1,0 +1,36 @@
+# Smoke test of the image path: a network trained on raw images (CPU, about a minute).
+# FedAvg trains the tiny CNN from scratch on the synthetic images (class-coloured squares, 32 px).
+# Make the data once:  cd dataset && python make_synthetic.py
+# Run:                 cd system && python main.py -cfg configs/smoke_multi_images.yaml
+# The tiny CNN exists for pipeline checks: its runs carry the SMOKE_TEST flag and are not results.
+scenario:
+  dataset: Synthetic
+  partition: dir
+  num_clients: 5
+  alpha: 0.5
+  class_per_task: 2          # 8 classes -> 4 tasks
+model:
+  backbone: tiny_cnn         # from scratch: pretrained false and trainable full are the defaults
+  augment: crop_flip         # 4-pixel zero padding, random 32-pixel crop, random flip
+schedule:
+  regime: multi_round
+  rounds_per_task: 5         # a new task arrives every 5 rounds -> 20 rounds in total
+  local_epochs: 3            # tiny clients: a few steps per round leave batch-norm statistics unsettled
+  batch_size: 16
+  learning_rate: 0.05
+  join_ratio: 1.0
+  eval_gap: 0
+algorithm:
+  name: FedAvg
+  hparams:
+    optimizer: sgd
+    momentum: 0.9
+    weight_decay: 0.0
+    lr_schedule: constant
+    loss_classes: seen
+run:
+  seed: 0
+  times: 3
+  goal: smoke
+  device: cpu
+  num_workers: 0             # tiny images: decoding in the main process is fastest

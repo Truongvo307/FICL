@@ -1,0 +1,34 @@
+# Template for a real multi-round run. Copy it, change the values, keep the structure.
+# The schedule section is what makes a run multi-round: rounds_per_task, local_epochs,
+# batch_size and learning_rate are all required, and a new task arrives every rounds_per_task rounds.
+#
+# SmokeFedAvgLinear is only a placeholder that checks the real-data pipeline end to end. Its
+# numbers carry the SMOKE_TEST flag and are not results.
+scenario:
+  dataset: TissueMNIST
+  partition: dir
+  num_clients: 10
+  alpha: 0.1
+  class_per_task: 2
+features:
+  backbone: dinov2_vitb14
+  group: pre
+  blocks: [11]
+  tokens: [cls]
+schedule:
+  regime: multi_round
+  rounds_per_task: 50        # task t covers global rounds 50t .. 50t+49
+  local_epochs: 1
+  batch_size: 64
+  learning_rate: 0.01
+  join_ratio: 1.0
+  eval_gap: 10               # curve point every 10 rounds (0 = off)
+algorithm:
+  name: SmokeFedAvgLinear
+  hparams:
+    weight_decay: 0.0
+run:
+  seed: 0
+  times: 3
+  goal: pipeline_check
+  device: cuda

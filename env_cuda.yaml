@@ -1,0 +1,29 @@
+# Conda environment for FICL (Python 3.11, PyTorch 2.0.1 + CUDA 11.8).
+#   conda env create -f env_cuda.yaml && conda activate ficl
+# Check:  python -c "import numpy, torch; print(numpy.__version__, torch.__version__)"   (numpy must be 1.x)
+# Then record the exact versions once:  pip freeze > requirements.lock
+#
+# NumPy must stay below 2: PyTorch 2.0.1 is built against NumPy 1.x, and with NumPy 2 every
+# torch <-> numpy conversion fails ("Failed to initialize NumPy: _ARRAY_API not found").
+# The pin is repeated in the pip section because pip does not see conda's pin: without it, a
+# dependency resolved by pip can upgrade NumPy to 2.x (pandas 3.x, which medmnist pulls in, did).
+name: ficl
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11
+  - numpy<2
+  - pip
+  - pillow
+  - pyyaml
+  - pytest
+  - pip:
+    - --extra-index-url https://download.pytorch.org/whl/cu118
+    - numpy<2                  # keep: see the note above
+    - pandas<3                 # pandas 3.x needs NumPy 2 (pandas comes in through medmnist)
+    - torch==2.0.1+cu118
+    - torchvision==0.15.2+cu118
+    - timm==0.9.16             # ViT-B/16 IN-21K backbone
+    - huggingface_hub<1        # timm 0.9.16 downloads from the HF hub; huggingface_hub 2.x breaks its imports
+    - open_clip_torch==2.24.0  # CLIP ViT-B/16 backbone
+    - medmnist==3.0.2          # MedMNIST+ at 224 px

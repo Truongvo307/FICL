@@ -1,0 +1,20 @@
+# Smoke test of the single-round path with natural clients (one client per domain).
+# Make the data once:  cd dataset && python make_synthetic.py
+scenario:
+  dataset: Synthetic
+  partition: natural         # the number of clients comes from the scenario (3 domains)
+  class_per_task: 2
+features:
+  backbone: synthetic
+  group: pre
+  blocks: [3]
+  tokens: [cls]
+schedule:
+  regime: single_round
+algorithm:
+  name: SmokeClassMean
+run:
+  seed: 0
+  times: 3
+  goal: smoke
+  device: cpu

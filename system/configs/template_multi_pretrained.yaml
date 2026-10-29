@@ -1,0 +1,50 @@
+# Template: a PRETRAINED ViT trained on raw images (family 2: head, last blocks, LoRA, prompts or full
+# fine-tuning). Copy it and set every value from your protocol; the numbers below are placeholders that
+# make the file run, not recommendations.
+# Needs:  cd dataset
+#         python prepare_data.py ImageNetR --download
+#         python generate_scenario.py ImageNetR dir --num_clients 10 --alpha 1.0 --class_per_task 20 --seed 0 --num_seeds 3
+# Check:  cd system && python main.py -cfg configs/template_multi_pretrained.yaml --dry_run
+# Run:    cd system && python main.py -cfg configs/template_multi_pretrained.yaml
+# The weights download on first use (timm / open_clip / torch.hub caches). No feature extraction is
+# needed for this family; the evaluation transform is the one extraction uses, so trained and frozen
+# arms see the same test inputs.
+scenario:
+  dataset: ImageNetR
+  partition: dir
+  num_clients: 10
+  alpha: 1.0
+  class_per_task: 20         # 200 classes -> 10 tasks
+model:
+  backbone: vit_b16_in21k    # vit_b16_in21k | dinov2_vitb14 | clip_vitb16 (224 px only)
+  trainable: lora            # head | last_k | lora | prompt | full
+  lora_rank: 8               # trainable lora only
+  lora_alpha: 8.0            # the update is W + (alpha / r) B A
+  lora_targets: [q, v]       # from q, k, v, proj, fc1, fc2, in every block
+  # last_k: 2                # trainable last_k only: the last 2 blocks, the final norm and the head
+  # prompt_length: 10        # trainable prompt only
+  # prompt_deep: false       # trainable prompt only: new prompts before every block
+  augment: rrc_flip          # none | flip | crop_flip | rrc_flip
+schedule:
+  regime: multi_round
+  rounds_per_task: 10        # placeholder
+  local_epochs: 1            # placeholder
+  batch_size: 32             # placeholder
+  learning_rate: 0.01        # placeholder
+  join_ratio: 1.0
+  eval_gap: 0
+algorithm:
+  name: FedAvg               # FedAvgJoint: the same with every task's data (an upper bound)
+  hparams:
+    optimizer: sgd
+    momentum: 0.9            # placeholder (sgd only)
+    weight_decay: 0.0
+    lr_schedule: cosine      # placeholder
+    loss_classes: seen
+run:
+  seed: 0
+  times: 3
+  goal: pretrained
+  device: cuda
+  num_workers: 8
+  eval_batch_size: 256
