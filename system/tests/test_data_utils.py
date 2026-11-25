@@ -34,11 +34,12 @@ def test_name_matches_dataset_side():
                 for seed in (0, 3):
                     for use_val in ("ignore", "merge"):
                         for m in ((0,) if partition == "natural" else (0, 5)):
-                            spec = ds.ScenarioSpec(dataset="X", partition=partition, num_clients=10, alpha=alpha,
-                                                   class_per_task=cpt, seed=seed, use_val=use_val,
-                                                   min_train_per_client=m)
-                            assert get_config_name(partition, 10, alpha, cpt, seed, use_val, m) == \
-                                ds.get_config_name(spec)
+                            for order in ("shuffled", "sorted"):
+                                spec = ds.ScenarioSpec(dataset="X", partition=partition, num_clients=10,
+                                                       alpha=alpha, class_per_task=cpt, seed=seed, use_val=use_val,
+                                                       min_train_per_client=m, class_order=order)
+                                assert get_config_name(partition, 10, alpha, cpt, seed, use_val, m, order) == \
+                                    ds.get_config_name(spec)
 
 
 def test_set_config_finds_folder_and_lists_alternatives(fake_dataset_root):

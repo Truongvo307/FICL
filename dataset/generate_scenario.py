@@ -7,6 +7,8 @@ Generate class-incremental federated scenarios for FICL.
     python generate_scenario.py TissueMNIST dir --num_clients 10 --alpha 0.1 --class_per_task 2 --seed 0 --num_seeds 3
     python generate_scenario.py TissueMNIST iid --num_clients 10 --class_per_task 2 --seed 0
     python generate_scenario.py DomainNet natural --class_per_task 35 --seed 0
+    python generate_scenario.py CIFAR100 dir --num_clients 10 --alpha 0.5 --class_per_task 10 --class_order sorted \
+        --min_train_per_client 6 --seed 0 --num_seeds 3          # the fed-mammoth (LoRM, HGP) protocol
     python generate_scenario.py TissueMNIST --list
 
 Needs <Name>/cl_index (prepare_data.py). Writes <Name>/<config_name>/, for example
@@ -20,7 +22,7 @@ import sys
 import numpy as np
 
 from utils.raw_utils import index_dir, load_raw_index
-from utils.scenario_utils import PARTITIONS, ScenarioSpec, build_scenario, list_configs, save_scenario
+from utils.scenario_utils import CLASS_ORDERS, PARTITIONS, ScenarioSpec, build_scenario, list_configs, save_scenario
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 
@@ -38,6 +40,9 @@ def parse_args(argv=None):
                    help="what to do with an official validation split")
     p.add_argument("--min_train_per_client", type=int, default=0,
                    help="redraw a task until every client has this many training samples (0 = off)")
+    p.add_argument("--class_order", choices=CLASS_ORDERS, default="shuffled",
+                   help="shuffled: a seeded permutation of the classes (default); sorted: label ids 0..C-1 "
+                        "for every seed (only the partition changes with the seed)")
     p.add_argument("--dataset_root", default=HERE)
     p.add_argument("--list", action="store_true", help="list existing scenarios of this dataset")
     return p.parse_args(argv)
@@ -86,7 +91,8 @@ def main(argv=None):
     for seed in range(args.seed, args.seed + args.num_seeds):
         spec = ScenarioSpec(dataset=args.dataset, partition=args.partition, num_clients=args.num_clients,
                             alpha=args.alpha, class_per_task=args.class_per_task, seed=seed,
-                            use_val=args.use_val, min_train_per_client=args.min_train_per_client)
+                            use_val=args.use_val, min_train_per_client=args.min_train_per_client,
+                            class_order=args.class_order)
         scn = build_scenario(idx, spec)
         path = save_scenario(scn, dataset_dir)
         print_summary(scn, idx, path)

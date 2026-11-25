@@ -1,8 +1,9 @@
 """Class-incremental federated scenarios for FICL (the "event schedule").
 
 A scenario fixes which samples each client holds at each task:
-  * classes are shuffled once with the seed and cut into tasks of class_per_task classes
-    (the last task may be smaller);
+  * classes are shuffled once with the seed (class_order "shuffled", the default) or kept in
+    label-id order 0..C-1 (class_order "sorted", the order of fed-mammoth and most benchmark
+    code), then cut into tasks of class_per_task classes (the last task may be smaller);
   * the training samples of each class go to clients by
       dir      Dirichlet(alpha) proportions per class (plain draw, no size cap),
       iid      an even random split,
@@ -43,6 +44,7 @@ import numpy as np
 
 SPLIT_TRAIN, SPLIT_VAL, SPLIT_TEST = 0, 1, 2      # same codes as raw_utils
 PARTITIONS = ("dir", "iid", "natural")
+CLASS_ORDERS = ("shuffled", "sorted")             # seeded permutation (default) | label ids 0..C-1
 SCENARIO_FORMAT = "fcl-scenario/1"
 MAX_REDRAWS = 1000
 
@@ -64,6 +66,7 @@ class ScenarioSpec:
     seed: int = 0
     use_val: str = "ignore"                # "ignore" the official val split, or "merge" it into train
     min_train_per_client: int = 0          # 0 = no rule; otherwise redraw a task until every client has this many
+    class_order: str = "shuffled"          # "shuffled" (seeded) | "sorted" (label ids in order, as fed-mammoth)
     join_task: tuple[int, ...] | None = None   # reserved for late joiners (not implemented yet)
 
     def __post_init__(self) -> None:
@@ -83,6 +86,8 @@ class ScenarioSpec:
             raise ValueError("min_train_per_client must be >= 0")
         if self.partition == "natural" and int(self.min_train_per_client) > 0:
             raise ValueError("natural partitions are fixed by the domains and cannot be redrawn")
+        if self.class_order not in CLASS_ORDERS:
+            raise ValueError(f"class_order must be one of {CLASS_ORDERS}, got {self.class_order!r}")
         if self.join_task is not None:
             object.__setattr__(self, "join_task", tuple(int(j) for j in self.join_task))
 
@@ -99,6 +104,8 @@ def get_config_name(spec: ScenarioSpec) -> str:
         name += "_valmerge"
     if spec.min_train_per_client > 0:
         name += f"_min{spec.min_train_per_client}"
+    if spec.class_order == "sorted":
+        name += "_sorted"
     if spec.join_task is not None:
         name += "_join" + hashlib.sha256(",".join(map(str, spec.join_task)).encode()).hexdigest()[:8]
     return name
@@ -241,7 +248,10 @@ def build_scenario(index, spec: ScenarioSpec) -> Scenario:
     rng_part = np.random.default_rng(seeds["partition"])
     rng_test = np.random.default_rng(seeds["test_alloc"])
 
-    class_order = make_class_order(num_classes, rng_order)
+    if spec.class_order == "sorted":
+        class_order = np.arange(num_classes, dtype=np.int64)     # the seed still sets the partition
+    else:
+        class_order = make_class_order(num_classes, rng_order)
     tasks = split_tasks(class_order, spec.class_per_task)
     train_rows, test_rows, test_global, redraws = [], [], [], []
 
@@ -308,6 +318,8 @@ def _sha256(path: str) -> str:
 
 def _spec_dict(spec: ScenarioSpec) -> dict:
     d = asdict(spec)
+    if d["class_order"] == "shuffled":
+        del d["class_order"]        # the default: scenario files written before the option stay identical
     if d["join_task"] is not None:
         d["join_task"] = list(d["join_task"])
     return d

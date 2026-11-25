@@ -48,7 +48,8 @@ def format_alpha(alpha: float) -> str:
 
 
 def get_config_name(partition: str, num_clients: int, alpha: float, class_per_task: int, seed: int,
-                       use_val: str = "ignore", min_train_per_client: int = 0) -> str:
+                       use_val: str = "ignore", min_train_per_client: int = 0,
+                       class_order: str = "shuffled") -> str:
     """Must stay identical to dataset/utils/scenario_utils.py:get_config_name (a test compares them)."""
     if partition == "natural":
         if min_train_per_client > 0:
@@ -64,6 +65,10 @@ def get_config_name(partition: str, num_clients: int, alpha: float, class_per_ta
         name += "_valmerge"
     if min_train_per_client > 0:
         name += f"_min{min_train_per_client}"
+    if class_order == "sorted":
+        name += "_sorted"
+    elif class_order != "shuffled":
+        raise ValueError(f"unknown class_order {class_order!r}")
     return name
 
 
@@ -77,6 +82,7 @@ class DataConfig:
     seed: int = 0
     use_val: str = "ignore"
     min_train_per_client: int = 0
+    class_order: str = "shuffled"
     dataset_root: str = DEFAULT_DATASET_ROOT
 
     # filled in by set_data_config
@@ -98,7 +104,7 @@ def set_data_config(cfg: DataConfig) -> None:
     """Find ../dataset/<Name>/<config_name>/ and fill in config_name, num_classes, num_tasks
     (and num_clients for natural scenarios). Raises with the list of existing scenarios."""
     name = get_config_name(cfg.partition, cfg.num_clients, cfg.alpha, cfg.class_per_task, cfg.seed,
-                              cfg.use_val, cfg.min_train_per_client)
+                              cfg.use_val, cfg.min_train_per_client, cfg.class_order)
     path = os.path.join(cfg.dataset_root, cfg.dataset, name)
     if not os.path.exists(os.path.join(path, "config.json")):
         if cfg.dataset == "Synthetic":
@@ -114,6 +120,8 @@ def set_data_config(cfg: DataConfig) -> None:
                 hint += f" --use_val {cfg.use_val}"
             if cfg.min_train_per_client:
                 hint += f" --min_train_per_client {cfg.min_train_per_client}"
+            if cfg.class_order != "shuffled":
+                hint += f" --class_order {cfg.class_order}"
             if not os.path.exists(os.path.join(cfg.dataset_root, cfg.dataset, "cl_index", "index.json")):
                 hint = (f"cd dataset && python prepare_data.py {cfg.dataset} --download  (there is no index yet), "
                         f"then  " + hint.replace("cd dataset && ", ""))

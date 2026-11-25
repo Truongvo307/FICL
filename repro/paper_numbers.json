@@ -1,0 +1,72 @@
+{
+ "label": "[R] numbers read from the papers, never results of ours. They are printed next to the official re-runs for orientation only and must not be copied into FICL result tables.",
+ "how_read": "Read on 2026-11-24 from the arXiv versions listed below through an automated text extraction of the PDF / HTML. Confirm each value against the PDF before quoting it (open item P1 in docs/OFFICIAL_REPRO.md).",
+ "numbers": {
+  "fed3r_icml24_t6_fed3r": {
+   "paper": "Fani et al., Accelerating Heterogeneous FL with Closed-form Classifiers, ICML 2024, arXiv:2406.01116v1",
+   "table": "Table 6", "caption": "Final accuracy (%) of the FED3R family of classifiers and FedNCM on the Cifar100 dataset.",
+   "setting": "CIFAR-100, 100 clients each holding one class (alpha = 0, Hsu et al. 2019), MobileNetV2 pre-trained on ImageNet, images scaled to 224x224, lambda = 0.01",
+   "method": "Fed3R", "metric": "final", "value": 63.2, "sd": null, "official_key": "Fed3R"
+  },
+  "fed3r_icml24_t6_fed3r_rf5k": {
+   "paper": "Fani et al., ICML 2024, arXiv:2406.01116v1", "table": "Table 6",
+   "caption": "Final accuracy (%) of the FED3R family of classifiers and FedNCM on the Cifar100 dataset.",
+   "setting": "as fed3r_icml24_t6_fed3r; random features D = 5000, sigma = 1000",
+   "method": "Fed3R-RF 5k", "metric": "final", "value": 66.2, "sd": null, "ours_label": "Fed3R-RF5k"
+  },
+  "fed3r_icml24_t6_fed3r_rf10k": {
+   "paper": "Fani et al., ICML 2024, arXiv:2406.01116v1", "table": "Table 6",
+   "caption": "Final accuracy (%) of the FED3R family of classifiers and FedNCM on the Cifar100 dataset.",
+   "setting": "as fed3r_icml24_t6_fed3r; random features D = 10000, sigma = 1000",
+   "method": "Fed3R-RF 10k", "metric": "final", "value": 67.5, "sd": null, "ours_label": "Fed3R-RF10k"
+  },
+  "fedcof_neurips25_t3_vit_fedncm": {
+   "paper": "Goswami et al., Covariances for Free, NeurIPS 2025, arXiv:2412.14326v3",
+   "table": "Table 3", "caption": "Evaluation of different training-free methods using 100 clients for first four datasets",
+   "setting": "CIFAR-100, 100 clients, Dirichlet alpha = 0.1, ViT-B/16 (d = 768), 5 random seeds",
+   "method": "FedNCM", "metric": "final", "value": 55.2, "sd": 0.1, "official_key": "FedNCM"
+  },
+  "fedcof_neurips25_t3_vit_fed3r": {
+   "paper": "Goswami et al., NeurIPS 2025, arXiv:2412.14326v3", "table": "Table 3",
+   "caption": "Evaluation of different training-free methods using 100 clients for first four datasets",
+   "setting": "as fedcof_neurips25_t3_vit_fedncm; Fed3R as implemented in the FedCOF repository (no bias column)",
+   "method": "Fed3R", "metric": "final", "value": 73.9, "sd": 0.1, "official_key": "Fed3R_fedcof_repo"
+  },
+  "fedcof_neurips25_t3_vit_fedcof": {
+   "paper": "Goswami et al., NeurIPS 2025, arXiv:2412.14326v3", "table": "Table 3",
+   "caption": "Evaluation of different training-free methods using 100 clients for first four datasets",
+   "setting": "as fedcof_neurips25_t3_vit_fedncm; gamma = 1",
+   "method": "FedCOF", "metric": "final", "value": 73.2, "sd": 0.1, "official_key": "FedCOF"
+  },
+  "afl_cvpr25_t2_cifar100": {
+   "paper": "He et al., AFL, CVPR 2025, arXiv:2405.16240v2",
+   "table": "Table 2", "caption": "The top-1 accuracy (%) of compared methods under two non-IID settings.",
+   "setting": "CIFAR-100, 100 clients, ResNet-18 pre-trained on ImageNet-1k, gamma = 1 with RI, 3 runs; identical for alpha = 0.1, 0.01 and s = 10, 5",
+   "method": "AFL", "metric": "final", "value": 58.56, "sd": 0.0, "official_key": "AFL"
+  },
+  "stsa_www26_t2_b05_stsa_final": {
+   "paper": "Guan et al., STSA, WWW 2026, arXiv:2506.01327v3",
+   "table": "Table 2", "caption": "Experimental results for training from pre-trained model (ViT-B/16) with varying levels of data heterogeneity.",
+   "setting": "CIFAR-100, T = 10 tasks, K = 5 clients, beta = 0.5, ViT-B/16 IN-21K with adapter, first stage 10 rounds x 2 local epochs, M = 1250, ridge 1e6",
+   "method": "STSA", "metric": "final", "value": 89.72, "sd": null, "official_key": "STSA"
+  },
+  "stsa_www26_t2_b05_stsa_avg": {
+   "paper": "Guan et al., WWW 2026, arXiv:2506.01327v3", "table": "Table 2",
+   "caption": "Experimental results for training from pre-trained model (ViT-B/16) with varying levels of data heterogeneity.",
+   "setting": "as stsa_www26_t2_b05_stsa_final", "method": "STSA", "metric": "avg", "value": 93.96, "sd": null,
+   "official_key": "STSA"
+  },
+  "stsa_www26_t2_b05_stsae_final": {
+   "paper": "Guan et al., WWW 2026, arXiv:2506.01327v3", "table": "Table 2",
+   "caption": "Experimental results for training from pre-trained model (ViT-B/16) with varying levels of data heterogeneity.",
+   "setting": "as stsa_www26_t2_b05_stsa_final; the paper states K_D = 10, the released main.py sets dummy = 5",
+   "method": "STSA-E", "metric": "final", "value": 89.37, "sd": null, "official_key": "STSA_E"
+  },
+  "stsa_www26_t2_b05_stsae_avg": {
+   "paper": "Guan et al., WWW 2026, arXiv:2506.01327v3", "table": "Table 2",
+   "caption": "Experimental results for training from pre-trained model (ViT-B/16) with varying levels of data heterogeneity.",
+   "setting": "as stsa_www26_t2_b05_stsae_final", "method": "STSA-E", "metric": "avg", "value": 93.35, "sd": null,
+   "official_key": "STSA_E"
+  }
+ }
+}

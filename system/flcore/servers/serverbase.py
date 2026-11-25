@@ -183,7 +183,7 @@ class Server:
             dataset=args.dataset, partition=args.partition, num_clients=args.num_clients or 0,
             alpha=args.data_alpha if args.data_alpha is not None else 0.0, class_per_task=args.class_per_task,
             seed=self.run_seed, use_val=args.use_val, min_train_per_client=args.min_train_per_client,
-            dataset_root=args.dataset_root)
+            class_order=args.class_order, dataset_root=args.dataset_root)
         set_data_config(self.data_config)
         self.scenario = load_scenario(self.data_config)
         self.num_clients = self.scenario.num_clients

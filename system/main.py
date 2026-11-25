@@ -62,6 +62,12 @@ from utils.result_utils import compute_averages, write_json
 ALGORITHMS = {
     "SmokeClassMean": "flcore.servers.serverclassmean:SmokeClassMean",          # single-round smoke test
     "SmokeFedAvgLinear": "flcore.servers.serverfedavglin:SmokeFedAvgLinear",    # multi-round smoke test
+    "FedCGS": "flcore.servers.serverfedcgs:FedCGS",                              # features: FedCGS (AAAI 2025)
+    "Fed3R": "flcore.servers.serverfed3r:Fed3R",                                # features: Fed3R / Fed3R-RF (ICML 2024)
+    "FedCOF": "flcore.servers.serverfedcof:FedCOF",                             # features: FedCOF (NeurIPS 2025)
+    "STSA": "flcore.servers.serverstsa:STSA",                                   # features: STSA (WWW 2026)
+    "STSA_E": "flcore.servers.serverstsa:STSA_E",                               # features: STSA-E (WWW 2026)
+    "AFL": "flcore.servers.serverafl:AFL",                                      # features: AFL (CVPR 2025)
     "FedAvg": "flcore.servers.serverfedavg:FedAvg",                              # images: sequential fine-tuning
     "FedAvgJoint": "flcore.servers.serverfedavg:FedAvgJoint",                    # images: joint upper bound
 }
@@ -136,7 +142,8 @@ def _data_config(args, seed: int) -> DataConfig:
     return DataConfig(dataset=args.dataset, partition=args.partition, num_clients=args.num_clients or 0,
                         alpha=args.data_alpha if args.data_alpha is not None else 0.0,
                         class_per_task=args.class_per_task, seed=seed, use_val=args.use_val,
-                        min_train_per_client=args.min_train_per_client, dataset_root=args.dataset_root)
+                        min_train_per_client=args.min_train_per_client, class_order=args.class_order,
+                        dataset_root=args.dataset_root)
 
 
 def preflight(args, verify_cache: bool = False) -> dict:

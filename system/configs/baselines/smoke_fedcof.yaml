@@ -1,0 +1,29 @@
+# FedCOF on the synthetic dataset: a quick check of the path, and quick data on which
+# check_baselines_official.py checks that our FedCOF equals the official code (docs/BASELINES.md, section 6).
+# Make the data once:  cd dataset && python make_synthetic.py
+# Run:                 cd system && python main.py -cfg configs/baselines/smoke_fedcof.yaml
+# Official vs ours:    cd system && python check_baselines_official.py --method FedCOF --official <clone> \
+#                          -cfg configs/baselines/smoke_fedcof.yaml --device cpu
+scenario:
+  dataset: Synthetic
+  partition: dir
+  num_clients: 5
+  alpha: 0.5
+  class_per_task: 2          # 8 classes -> 4 tasks
+features:
+  backbone: synthetic
+  group: pre
+  blocks: [3]
+  tokens: [cls]
+schedule:
+  regime: single_round       # closed form: one upload per client per task
+algorithm:
+  name: FedCOF
+  hparams:
+    gamma_shrink: 1.0         # paper: ViT-B/16 and SqueezeNet
+    means_per_client: 1        # released code
+run:
+  seed: 0
+  times: 3
+  goal: smoke
+  device: cpu

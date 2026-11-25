@@ -218,6 +218,9 @@ and read by every experiment, so all algorithms see exactly the same data.
 - `--use_val merge`: put an official validation split into training (default `ignore`).
 - `--min_train_per_client m`: redraw a task until every client has at least m training images (not for
   `natural`).
+- `--class_order sorted`: tasks take the classes in label-id order (0..C−1) for every seed, as
+  fed-mammoth and most benchmark code do; the seed then changes only the partition. The default,
+  `shuffled`, is a seeded permutation. Folder names get `_sorted`.
 - `--num_seeds n`: write seeds seed .. seed+n−1, one folder each; run i of an experiment reads seed
   `seed + i`.
 
@@ -313,6 +316,7 @@ python generate_scenario.py ImageNetR --list
 | `--seed`, `--num_seeds` | 0, 1 | first seed and number of seeds |
 | `--use_val` | `ignore` | `merge` adds an official validation split to training |
 | `--min_train_per_client` | 0 (off) | minimum training images per client and task |
+| `--class_order` | `shuffled` | `sorted`: classes in label-id order for every seed |
 
 ---
 
@@ -408,7 +412,7 @@ files, checks and byte counting. They differ in what the clients read and what t
 
 | Family | What the clients train | Input | Settings section | Needs in `dataset/` | Algorithms here |
 |---|---|---|---|---|---|
-| 1. Frozen pretrained | nothing in the backbone: statistics or a head on fixed features | cached features | `features` | index, feature cache, scenarios | `SmokeClassMean`, `SmokeFedAvgLinear` (pipeline checks) |
+| 1. Frozen pretrained | nothing in the backbone: statistics or a head on fixed features | cached features | `features` | index, feature cache, scenarios | `FedCGS`; `SmokeClassMean`, `SmokeFedAvgLinear` (pipeline checks) |
 | 2. Pretrained, trained | a pretrained ViT: `head`, `last_k`, `lora`, `prompt` or `full`, plus a linear head | raw images | `model` | index, scenarios | `FedAvg`, `FedAvgJoint` |
 | 3. From scratch | a CNN from a random start, plus a linear head | raw images | `model` | index, scenarios | `FedAvg`, `FedAvgJoint` |
 
@@ -430,7 +434,8 @@ python main.py -data ImageNetR -partition dir -nc 10 -alpha 0.1 -cpt 20 \
 ```
 
 What to choose: the backbone and cache group, which blocks and tokens to read, and an optional random
-projection (section 6.2, Features).
+projection (section 6.2, Features). The FedCGS baseline runs the same way, with `-algo FedCGS` (configs in
+`system/configs/fedcgs/`, see [reports/FEDCGS.md](reports/FEDCGS.md)).
 
 **Family 2: a pretrained ViT trained on the images.** No feature extraction; the weights download on
 first use.
@@ -522,6 +527,7 @@ for the chosen algorithm or partition is refused with an error; it is never sile
 | `class_per_task` | `-cpt` | — | classes per task; tasks = ceil(classes / cpt) |
 | `use_val` | `-useval` | `ignore` | official validation split: `ignore` or `merge` |
 | `min_train_per_client` | `-mintr` | 0 | as given to `generate_scenario.py` |
+| `class_order` | `-corder` | `shuffled` | as given to `generate_scenario.py`: `shuffled` or `sorted` |
 | `dataset_root` | `-droot` | `../dataset` | folder that holds the dataset folders |
 
 **Features: the frozen pretrained model and what to read from it**
@@ -725,6 +731,7 @@ torchvision's ResNets. Global pooling is the mean over positions, so any input s
 | Algorithm | Family | Regime | What it does |
 |---|---|---|---|
 | `SmokeClassMean` | 1 | single-round | Each client uploads per-class feature sums and counts once per task; the server keeps the totals and predicts the nearest class mean. Because sums add up, the federated model equals the centralized one for any client split. Flag `SMOKE_TEST`. |
+| `FedCGS` | 1 | single-round | FedCGS (Guan et al., AAAI 2025). Clients upload class sums, class counts and the uncentred second moment of their current task's features; the server adds them over clients and tasks. It then predicts with a Gaussian discriminant: class means, the total covariance around the global mean and class priors. One hyperparameter, `gamma` (default 0, the official value). After every task it equals FedCGS fitted centrally on all data seen so far. Flag `REFERENCE`. Details, differences from the official code and the official-code check: [reports/FEDCGS.md](reports/FEDCGS.md). |
 | `SmokeFedAvgLinear` | 1 | multi-round | FedAvg on a linear softmax head over the cached features. Every round the selected clients run local SGD on their current-task data, and the server averages the heads weighted by sample counts. There is no replay, so earlier classes are forgotten, as expected. Flag `SMOKE_TEST`. |
 | `FedAvg` | 2, 3 | multi-round | FedAvg of the network of the `model` section on the current task's images only: sequential fine-tuning, the lower reference of class-incremental learning (earlier classes are forgotten). Flag `REFERENCE`. |
 | `FedAvgJoint` | 2, 3 | multi-round | The same on the images of every task so far: joint training, an upper bound. Flag `UPPER_BOUND`. |
@@ -901,8 +908,8 @@ From the repository root:
 
 The two sides run separately, because `dataset/utils` would shadow `system/utils` if both folders were
 on Python's path. `./run_tests.sh` runs both CPU sides in one go and first prints the Python, NumPy,
-torch, torchvision, timm and open_clip versions. Expected: dataset 63 passed and 8 deselected; system
-102 passed and 19 deselected. The GPU tests download the pretrained weights on first use.
+torch, torchvision, timm and open_clip versions. Expected: dataset 64 passed and 8 deselected; system
+113 passed and 19 deselected. The GPU tests download the pretrained weights on first use.
 
 The tests cover:
 - **Scenarios:** every class in one task; disjoint client shards that cover the data; test shards equal
@@ -980,6 +987,31 @@ well above chance (1 / classes per task); `FedAvgJoint`'s final accuracy above `
 the earlier tasks; and, on each of EuroSAT and DermaMNIST, the frozen nearest class mean and the head
 trained on the same frozen DINOv2 features in the same range. These are sanity checks of the pipeline with short schedules, not
 reference numbers.
+
+### 10.2 Checking against a published FCIL benchmark
+
+This check reproduces the fed-mammoth protocol of LoRM (ICLR 2025) and HGP (TMLR 2025): CIFAR-100 in
+10 tasks, 10 clients, Dirichlet β, timm `vit_base_patch16_224.augreg_in21k` trained in full with AdamW,
+5 rounds × 5 epochs × batch 16. It runs FedAvg fine-tuning and the Joint bound three ways:
+
+1. our code (`system/configs/reference/*.yaml`);
+2. fed-mammoth's own code, re-run with the same flags;
+3. the published numbers [R].
+
+`compare_reference.py` puts the three side by side and applies the gap rule (max of 2 points and
+2 × SD). The full protocol, the known differences, the commands and how to read the outcome are in
+[reports/REFERENCE_CHECK.md](reports/REFERENCE_CHECK.md). The published numbers live in
+`reports/reference_numbers.json` and never go into our result tables.
+
+```bash
+cd dataset
+python generate_scenario.py CIFAR100 dir --num_clients 10 --alpha 0.05 --class_per_task 10 \
+    --class_order sorted --min_train_per_client 6 --seed 0 --num_seeds 3
+cd ../system
+python main.py -cfg configs/reference/ref_cifar100_fedavg_b0.05.yaml
+python compare_reference.py configs/reference/ref_cifar100_fedavg_b0.05.yaml <EXPERIMENT_DIR> \
+    --mammoth <fed-mammoth logs of the 3 seeds>
+```
 
 ---
 

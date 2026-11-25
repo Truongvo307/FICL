@@ -156,6 +156,6 @@ cython_debug/
 !/dataset/utils/
 !/dataset/tests/
 !/dataset/configs/
-
+!/dataset/*.py
 # Ignore downloaded files and local credentials
 *.log

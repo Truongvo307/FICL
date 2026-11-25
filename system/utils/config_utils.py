@@ -262,6 +262,9 @@ OPTIONS = (
            "official validation split: ignore | merge", ("ignore", "merge")),
     Option("min_train_per_client", "scenario", "min_train_per_client", ("-mintr", "--min_train_per_client"),
            "int", 0, "as given to generate_scenario.py"),
+    Option("class_order", "scenario", "class_order", ("-corder", "--class_order"), "str", "shuffled",
+           "as given to generate_scenario.py: shuffled (seeded) | sorted (label ids 0..C-1)",
+           ("shuffled", "sorted")),
     Option("dataset_root", "scenario", "dataset_root", ("-droot", "--dataset_root"), "str",
            os.path.join("..", "dataset"), "folder that holds the dataset folders"),
     # features: which cached features a run reads
@@ -821,6 +824,8 @@ def describe_protocol(args, plan: dict) -> list[str]:
     scen += f"  {K} clients"
     if args.use_val != "ignore":
         scen += f"  val split: {args.use_val}"
+    if getattr(args, "class_order", "shuffled") != "shuffled":
+        scen += f"  class order: {args.class_order}"
     lines.append(f"scenario    {scen}")
     inc = f"{args.class_per_task} classes per task -> {T} tasks over {plan['num_classes']} classes"
     if len(set(sizes)) > 1:

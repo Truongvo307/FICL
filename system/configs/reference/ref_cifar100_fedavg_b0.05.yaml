@@ -1,0 +1,48 @@
+# Reference check against the fed-mammoth benchmark (LoRM, ICLR 2025; HGP, TMLR 2025): ref_cifar100_fedavg_b0.05
+# What it runs: FedAvg sequential full fine-tuning (fed-mammoth model fedavg), 10 tasks of 10 classes, Dirichlet beta 0.05.
+# Every setting below is copied from the fed-mammoth code (github.com/aimagelab/fed-mammoth, commit 6d57b5d):
+# 10 clients, 5 rounds per task, 5 local epochs, batch 16, AdamW (weight decay 0) created anew every round,
+# cross-entropy over the current task's classes only, evaluation over all seen classes, timm
+# vit_base_patch16_224.augreg_in21k trained in full, classes in label-id order, at least 6 training samples
+# per client and task. The learning rate 3e-4 is fed-mammoth's FedAvg default; the papers' exact value for
+# this baseline is not confirmed (reports/REFERENCE_CHECK.md, item U1). Differences that remain are listed there.
+# Needs:  cd dataset
+#         python prepare_data.py CIFAR100 --download
+#         python generate_scenario.py CIFAR100 dir --num_clients 10 --alpha 0.05 --class_per_task 10 --class_order sorted --min_train_per_client 6 --seed 0 --num_seeds 3
+# Check:  cd system && python main.py -cfg configs/reference/ref_cifar100_fedavg_b0.05.yaml --dry_run
+# Run:    cd system && python main.py -cfg configs/reference/ref_cifar100_fedavg_b0.05.yaml
+# Compare: cd system && python compare_reference.py configs/reference/ref_cifar100_fedavg_b0.05.yaml <experiment folder>
+scenario:
+  dataset: CIFAR100
+  partition: dir
+  num_clients: 10
+  alpha: 0.05
+  class_per_task: 10
+  class_order: sorted        # label ids 0..C-1, as fed-mammoth (the seed changes the partition only)
+  min_train_per_client: 6    # fed-mammoth redraws a task until every client has >= 6 training samples
+model:
+  backbone: vit_b16_in21k    # timm vit_base_patch16_224.augreg_in21k, the checkpoint fed-mammoth loads
+  trainable: full            # fed-mammoth FedAvg trains every parameter of the ViT and its head
+  augment: rrc_flip          # random resized crop (8-100%, 3/4-4/3, bicubic) + flip, as its default_train
+schedule:
+  regime: multi_round
+  rounds_per_task: 5         # --num_comm_rounds=5
+  local_epochs: 5            # --num_epochs=5
+  batch_size: 16             # --batch_size=16
+  learning_rate: 0.0003      # FedAvg default lr of fed-mammoth (see U1)
+  join_ratio: 1.0            # participation_rate 1.0
+  eval_gap: 0
+algorithm:
+  name: FedAvg
+  hparams:
+    optimizer: adamw         # fed-mammoth FedAvg: torch.optim.AdamW, re-created in begin_round_client
+    weight_decay: 0.0        # --wd_reg=0
+    lr_schedule: constant
+    loss_classes: task       # outputs[:, cur_offset:cur_offset + cpt]: the current task's classes only
+run:
+  seed: 0
+  times: 3                   # seeds 0, 1, 2; report all three
+  goal: ref_mammoth
+  device: cuda
+  num_workers: 8
+  eval_batch_size: 256

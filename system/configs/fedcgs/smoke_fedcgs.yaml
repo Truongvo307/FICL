@@ -1,0 +1,26 @@
+# FedCGS on the synthetic dataset: a quick check of the path (and of check_fedcgs_official.py).
+# Make the data once:  cd dataset && python make_synthetic.py
+# Run:                 cd system && python main.py -cfg configs/fedcgs/smoke_fedcgs.yaml
+# Official vs ours:    cd system && python check_fedcgs_official.py --official <FedCGS clone> -cfg configs/fedcgs/smoke_fedcgs.yaml --device cpu
+scenario:
+  dataset: Synthetic
+  partition: dir
+  num_clients: 5
+  alpha: 0.5
+  class_per_task: 2          # 8 classes -> 4 tasks
+features:
+  backbone: synthetic
+  group: pre
+  blocks: [3]
+  tokens: [cls]
+schedule:
+  regime: single_round       # FedCGS: one upload per client per task
+algorithm:
+  name: FedCGS
+  hparams:
+    gamma: 0.0               # the official value (gamma_list = [0])
+run:
+  seed: 0
+  times: 3
+  goal: smoke
+  device: cpu

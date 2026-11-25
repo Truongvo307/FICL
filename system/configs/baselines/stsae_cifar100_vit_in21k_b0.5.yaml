@@ -1,0 +1,34 @@
+# STSA-E (Guan et al., WWW 2026), without its first-stage adaptation on cached features of a frozen backbone, class-incremental.
+# The shared comparison setting of docs/BASELINES.md: CIFAR-100, 10 tasks of 10 classes, 10 clients, Dirichlet
+# 0.5, ViT-B/16 IN-21K final-norm CLS features; every method reads the same scenario files and the same cache.
+# Needs:  cd dataset
+#         python prepare_data.py CIFAR100 --download
+#         python extract_features.py CIFAR100 --backbone vit_b16_in21k
+#         python generate_scenario.py CIFAR100 dir --num_clients 10 --alpha 0.5 --class_per_task 10 --seed 0 --num_seeds 3
+# Check:  cd system && python main.py -cfg configs/baselines/stsae_cifar100_vit_in21k_b0.5.yaml --dry_run
+# Run:    cd system && python main.py -cfg configs/baselines/stsae_cifar100_vit_in21k_b0.5.yaml
+# Other backbone: add -bb dinov2_vitb14 (or clip_vitb16) after extracting its cache. Other beta: -alpha 0.1.
+scenario:
+  dataset: CIFAR100
+  partition: dir
+  num_clients: 10
+  alpha: 0.5
+  class_per_task: 10
+features:
+  backbone: vit_b16_in21k
+  group: last_ln             # the last block after the backbone's final norm
+  blocks: [11]
+  tokens: [cls]
+schedule:
+  regime: single_round       # closed form: one upload per client per task
+algorithm:
+  name: STSA_E
+  hparams:
+    rp_dim: 1250               # paper, ViT-B/16
+    ridge: 1000000.0           # paper, ViT-B/16
+    subsets: 10                # K_D, paper ViT-B/16 (released main.py: 5)
+run:
+  seed: 0
+  times: 3                   # scenario seeds 0, 1, 2; report all three
+  goal: baselines
+  device: cpu                # numpy only

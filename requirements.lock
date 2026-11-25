@@ -1,0 +1,57 @@
+certifi==2026.11.20
+charset-normalizer==3.5.3
+cloudpickle==3.1.3
+cmake==4.4.5
+colorama @ file:///home/conda/feedstock_root/build_artifacts/colorama_1733218098505/work
+exceptiongroup @ file:///home/conda/feedstock_root/build_artifacts/bld/rattler-build_exceptiongroup_h5ded981_1795172939/work
+filelock==4.3.1
+fire==0.7.1
+fsspec==2026.9.0
+ftfy==6.3.1
+hf-xet==1.8.0
+huggingface_hub==0.36.2
+idna==3.20
+ImageIO==2.38.2
+iniconfig @ file:///home/conda/feedstock_root/build_artifacts/iniconfig_1791588459171/work
+Jinja2==3.1.6
+joblib==1.6.0
+lazy-loader==0.6
+lit==23.1.6
+MarkupSafe==3.0.4
+medmnist==3.0.2
+mpmath==1.3.0
+narwhals==2.29.0
+networkx==3.6.1
+numpy @ file:///home/conda/feedstock_root/build_artifacts/numpy_1707225376651/work/dist/numpy-1.26.4-cp311-cp311-linux_x86_64.whl#sha256=d08e1c9e5833ae7780563812aa73e2497db1ee3bd5510d3becb8aa18aa2d0c7c
+open-clip-torch==2.24.0
+packaging @ file:///home/conda/feedstock_root/build_artifacts/bld/rattler-build_packaging_1785888127/work
+pandas==2.3.3
+pillow @ file:///home/conda/feedstock_root/build_artifacts/bld/rattler-build_pillow_hf303fd3_1794884445/work
+pluggy @ file:///home/conda/feedstock_root/build_artifacts/bld/rattler-build_pluggy_1792063298/work
+protobuf==7.36.2
+Pygments @ file:///home/conda/feedstock_root/build_artifacts/bld/rattler-build_pygments_1786995678/work
+pytest @ file:///home/conda/feedstock_root/build_artifacts/bld/rattler-build_pytest_hc364b38_1793214631/work
+python-dateutil==4.0.0
+pytz==2026.6
+PyYAML @ file:///home/conda/feedstock_root/build_artifacts/bld/rattler-build_pyyaml_h364832d_1795255203/work
+regex==2026.11.24
+requests==2.34.2
+safetensors==0.8.0
+scikit-image==0.26.0
+scikit-learn==1.9.1
+scipy==1.17.1
+sentencepiece==0.2.3
+sympy==1.14.0
+termcolor==3.3.0
+threadpoolctl==3.8.0
+tifffile==2026.3.3
+timm==0.9.16
+tomli @ file:///home/conda/feedstock_root/build_artifacts/bld/rattler-build_tomli_1791394576/work
+torch==2.0.1+cu118
+torchvision==0.15.2+cu118
+tqdm==4.70.1
+triton==2.0.0
+typing_extensions @ file:///home/conda/feedstock_root/build_artifacts/bld/rattler-build_typing_extensions_1783002732/work
+tzdata==2026.6
+urllib3==2.8.0
+wcwidth==0.9.5

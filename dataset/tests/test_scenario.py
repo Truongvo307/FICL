@@ -131,6 +131,32 @@ def test_seed_in_config_name():
     assert get_config_name(_spec(partition="natural")) == "cl_natural_cpt2_seed0"
     assert get_config_name(_spec(use_val="merge")) == "cl_5clients_dir_0.3_cpt2_seed0_valmerge"
     assert get_config_name(_spec(min_train_per_client=3)) == "cl_5clients_dir_0.3_cpt2_seed0_min3"
+    assert get_config_name(_spec(class_order="sorted")) == "cl_5clients_dir_0.3_cpt2_seed0_sorted"
+    assert get_config_name(_spec(min_train_per_client=6, class_order="sorted")) == \
+        "cl_5clients_dir_0.3_cpt2_seed0_min6_sorted"
+
+
+def test_sorted_class_order(synthetic_index, tmp_path):
+    """sorted: tasks are label ids in order for every seed; the seed still changes the partition; the
+    spec round-trips through the saved files, and a default (shuffled) spec is saved without the key, as
+    scenario folders written before the option were."""
+    s0 = build_scenario(synthetic_index, _spec(class_order="sorted", seed=0))
+    s1 = build_scenario(synthetic_index, _spec(class_order="sorted", seed=1))
+    C = synthetic_index.num_classes
+    assert s0.class_order.tolist() == list(range(C)) == s1.class_order.tolist()
+    assert [t.tolist() for t in s0.tasks] == [list(range(i, min(i + 2, C))) for i in range(0, C, 2)]
+    assert any(not np.array_equal(a, b) for t in range(s0.num_tasks)
+               for a, b in zip(s0.train_rows[t], s1.train_rows[t]))
+    path = save_scenario(s0, str(tmp_path))
+    assert load_scenario(path).spec.class_order == "sorted"
+    with open(os.path.join(path, "config.json")) as f:
+        assert json.load(f)["spec"]["class_order"] == "sorted"
+    plain = save_scenario(build_scenario(synthetic_index, _spec()), str(tmp_path))
+    with open(os.path.join(plain, "config.json")) as f:
+        assert "class_order" not in json.load(f)["spec"]
+    assert load_scenario(plain).spec.class_order == "shuffled"
+    with pytest.raises(ValueError):
+        _spec(class_order="alphabetical")
 
 
 def test_natural_mode(synthetic_index):
